@@ -1,0 +1,22 @@
+{
+  "IN": {
+    "countryCode": "+91",
+    "phoneLength": 10
+  },
+  "SG": {
+    "countryCode": "+65",
+    "phoneLength": 8
+  },
+  "US": {
+    "countryCode": "+1",
+    "phoneLength": 10
+  },
+  "UK": {
+    "countryCode": "+44",
+    "phoneLength": 10
+  },
+  "MY": {
+    "countryCode": "+60",
+    "phoneLength": 10
+  }
+}

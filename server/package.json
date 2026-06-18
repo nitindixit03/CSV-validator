@@ -1,0 +1,22 @@
+{
+  "name": "server",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "csv-parser": "^3.2.1",
+    "csv-stringify": "^6.8.0",
+    "express": "^5.2.1",
+    "multer": "^2.2.0"
+  }
+}
