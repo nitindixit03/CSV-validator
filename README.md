@@ -1,110 +1,91 @@
 # CSV Transaction Validator
 
-Upload a CSV, get back cleaned CSVs + an error report. Runs validation in a single streaming pass — reads rows one by one, no full-file buffering.
+A full-stack web application for validating, cleaning, and processing CSV transaction files. Upload a CSV, get back cleaned data chunks and a detailed validation error report.
 
-## What I built
+## Features
 
-A full-stack app with a React frontend and Express backend. The backend streams the CSV through a validation pipeline and writes two outputs:
+- **Drag-and-drop upload** — intuitive file selection with CSV validation
+- **Streaming validation** — reads rows one by one, no full-file buffering
+- **4 validation checks:**
+  - Missing value detection
+  - Duplicate row identification
+  - Type consistency analysis (numeric vs string columns)
+  - Phone number validation with country-specific rules (IN, SG, US, UK, MY)
+- **Chunked output** — cleaned files split at 10,000 rows per file
+- **Dark mode UI** — professional-grade interface with real-time stats
+- **Download reports** — cleaned CSVs and validation errors report
 
-- **Cleaned CSV(s)** — rows that passed validation, split at 10,000 rows per file
-- **Validation errors CSV** — row number + error message for each bad row
+## Tech Stack
 
-The frontend shows a summary (total/valid/invalid counts) and provides download links.
-
-## Approach
-
-**Data-driven, schema-less validation.** The validator doesn't know the column names ahead of time. It reads the CSV headers dynamically, then tracks state per column as rows stream in. Three generic checks:
-
-| Check            | How                                                                  |
-| ---------------- | -------------------------------------------------------------------- |
-| Missing values   | Any empty cell                                                       |
-| Duplicates       | Same value appears >1x in a column (keeps first occurrence)          |
-| Type consistency | After 10+ rows, if 80%+ of values are numeric, flag non-numeric ones |
-
-Plus **phone number validation** — if a value starts with `+` and looks like a phone number (7+ digits), it's checked against known country codes (`countries.json`). Validates country code prefix and digit length (e.g., +91 followed by exactly 10 digits for India). Unknown country codes or wrong lengths are flagged.
-
-That's it. No hardcoded column names, no format-specific rules. Any CSV works, but the checks are deliberately generic.
-
-**Streaming pipeline.** `csv-parser` pipes rows through the validator, which feeds into `csv-stringify` writers — one for cleaned rows (with chunk rotation), one for errors. Memory use depends on row width, not file size.
-
-**Chunked output.** Cleaned files are capped at 10,000 rows. Past that, a new `cleaned_part_N.csv` is created.
-
-## Tradeoffs
-
-- **Error file doesn't include original row data.** Just row number + message. You have to cross-reference the original CSV.
-- **No persistence.** Outputs live in `output/` on disk until cleaned up. Restart the server, results are gone.
-- **No concurrency.** Two simultaneous uploads overwrite each other's output files. No request-scoped isolation.
-- **No queue.** Processing blocks the request thread. Large files hold the connection open until done.
-
-- **No tests.**
-- **No file size limits, no cleanup, no progress indicators.** It's a prototype.
-
-## Assumptions
-
-- CSV must have a header row
-- Empty cell = error (including whitespace-only)
-- Duplicate values are always errors — even legitimate repeats like "ACTIVE" status across rows
-- After 10 rows, the column's type profile is stable enough to decide whether it's numeric
-- `Number("")` evaluates to `0` (vanilla JS behavior), but empty strings are caught before the numeric check
-- Output directory is writable and has enough disk space
-- Only one person uses it at a time
+| Layer       | Technology                       |
+|-------------|----------------------------------|
+| Frontend    | React 19, TypeScript, Vite       |
+| Backend     | Express 5, TypeScript, Bun       |
+| Validation  | Custom streaming pipeline        |
+| CSV parsing | csv-parser, csv-stringify        |
 
 ## Project Structure
 
 ```
-server/
-  config/countries.json     # Phone config (unused)
-  src/
-    types/index.ts
-    services/validator.ts
-    services/csvProcessor.ts
-    controllers/uploadController.ts
-    routes/uploadRoutes.ts
-    utils/fileUtils.ts      # loadCountries() used by validator
-  index.ts
-
-client/
-  src/
-    types/index.ts
-    components/
-      UploadPage.tsx
-      ResultPage.tsx
-    App.tsx
-    App.css
+├── client/                    # React frontend
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── UploadPage.tsx      # Drag-and-drop file upload
+│   │   │   └── ResultPage.tsx      # Validation summary & downloads
+│   │   ├── App.tsx                 # Root component
+│   │   ├── App.css                 # Dark theme styles
+│   │   └── index.css               # Global base styles
+│   └── index.html
+│
+└── server/                    # Express API
+    ├── src/
+    │   ├── controllers/
+    │   │   ├── uploadController.ts    # Upload handling
+    │   │   └── downloadController.ts  # File downloads
+    │   ├── services/
+    │   │   ├── validator.ts           # Core validation logic
+    │   │   └── csvProcessor.ts        # Streaming pipeline
+    │   ├── routes/uploadRoutes.ts     # Route definitions
+    │   ├── types/index.ts             # Shared types
+    │   └── utils/fileUtils.ts         # File helpers
+    ├── config/countries.json         # Phone validation rules
+    └── index.ts                      # Server entry point
 ```
 
-## Setup
+## Quick Start
 
 Requires [Bun](https://bun.sh) v1.2+.
 
 ```bash
+# Install dependencies
 cd server && bun install
 cd ../client && bun install
-```
 
-### Run server
-
-```bash
+# Start the API server (terminal 1)
 cd server && bun run index.ts
-# http://localhost:3001
-```
 
-### Run client (separate terminal)
-
-```bash
+# Start the frontend dev server (terminal 2)
 cd client && bun run dev
-# http://localhost:5173 (proxies /api and /output to backend)
 ```
 
-## Usage
-
-1. Open http://localhost:5173
-2. Upload a CSV
-3. View results + download cleaned files and error report
+Open http://localhost:5173, upload a CSV, and view results.
 
 ## API
 
-| Method | Endpoint            | Description                                     |
-| ------ | ------------------- | ----------------------------------------------- |
-| POST   | `/api/upload`       | Upload CSV (multipart/form-data, field: `file`) |
-| GET    | `/output/:filename` | Download processed file                         |
+| Method | Endpoint                  | Description                        |
+|--------|---------------------------|------------------------------------|
+| POST   | `/api/upload`             | Upload CSV (multipart, field: file)|
+| GET    | `/api/download/:filename` | Download processed file            |
+
+## Validation Rules
+
+| Check             | Description                                                         |
+|-------------------|---------------------------------------------------------------------|
+| Missing values    | Any empty cell is flagged                                           |
+| Duplicates        | Repeated values in a column (keeps first occurrence)                |
+| Type consistency  | After 10 rows, if 80%+ values are numeric, non-numeric ones flagged |
+| Phone numbers     | Values starting with `+` checked against country code + digit rules |
+
+## License
+
+MIT

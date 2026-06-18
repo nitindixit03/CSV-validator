@@ -1,15 +1,8 @@
-# server
+# Server
 
-To install dependencies:
+Express API for CSV Transaction Validator. Built with TypeScript + Bun.
 
 ```bash
 bun install
+bun run index.ts  # http://localhost:3001
 ```
-
-To run:
-
-```bash
-bun run index.ts
-```
-
-This project was created using `bun init` in bun v1.2.22. [Bun](https://bun.com) is a fast all-in-one JavaScript runtime.
