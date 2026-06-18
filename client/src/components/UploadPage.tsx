@@ -73,7 +73,7 @@ export default function UploadPage({ onComplete }: UploadPageProps) {
     formData.append("file", file);
 
     try {
-      const res = await fetch("/api/upload", {
+      const res = await fetch("https://csv-validator-server.onrender.com/api/upload", {
         method: "POST",
         body: formData,
       });

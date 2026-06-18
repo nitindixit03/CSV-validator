@@ -7,7 +7,7 @@ interface ResultPageProps {
 
 export default function ResultPage({ result, onReset }: ResultPageProps) {
   const { totalRows, validRows, invalidRows, cleanedFiles, errorFile, detectedFields } = result;
-  const apiBase = "";
+  const apiBase = "https://csv-validator-server.onrender.com";
 
   const validPercent = totalRows > 0 ? Math.round((validRows / totalRows) * 100) : 0;
   const invalidPercent = totalRows > 0 ? Math.round((invalidRows / totalRows) * 100) : 0;

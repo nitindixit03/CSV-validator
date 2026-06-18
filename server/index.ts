@@ -8,7 +8,11 @@ const PORT = process.env.PORT || 3001;
 
 ensureDir(OUTPUT_DIR);
 
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3001"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3001",
+  "https://csv-validator-9782.onrender.com",
+];
 
 app.use(
   cors({
